@@ -18,18 +18,18 @@ int check_cell(int new_position, MAZE maze) {
     // else return 0
 }
 
-int open_map(MAZE maze) {
+char open_map(char *maze) {
     // print 2d array to user
 }
 
-int move_character(PLAYER player, char *map) {
+void move_character(PLAYER player, char *map) {
     // call check cell function
     // if check cell returns 1, exit this function
     // update struct details
     // update 2d array map
 }
 
-int read_from_file(int input) {
+void read_from_file(int input) {
     // error checking to make sure file exists
     // if file doesnt exist, throw error and exit program
     // open file
@@ -38,7 +38,7 @@ int read_from_file(int input) {
     // if not, throw error and exit program
 }
 
-int main() {
+int main(int argc, char *argv[]) {
     // store command line argument as filename
     // call function read_from_file
     // show map to user
