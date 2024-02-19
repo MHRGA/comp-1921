@@ -39,6 +39,8 @@ void read_from_file(int input) {
 }
 
 int main(int argc, char *argv[]) {
+    // check if there is a valid command line argument
+    // if not display a usage message
     // store command line argument as filename
     // call function read_from_file
     // show map to user
