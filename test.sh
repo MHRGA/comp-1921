@@ -132,7 +132,3 @@ then
 else
     echo "FAIL"
 fi
-
-./code maze1.txt < test_data/maze1_input.txt > tmp
-
-echo "1" | ./code maze1.txt > tmp
