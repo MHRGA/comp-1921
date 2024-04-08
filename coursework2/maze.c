@@ -46,7 +46,24 @@ int create_maze(maze *this, FILE *file, int height, int width)
 {
     this->height = height;
     this->width = width;
+    int buffer_size = 100;
+    char line_buffer[buffer_size];
+    while (fgets(line_buffer, buffer_size, file) != '\n') {
+        for(int i = 0; i < this->height; i++) {
+            for(int j=0; j < this->width; j++) {
+                if(line_buffer[j] == 'S') {
+                    coord start = {i,j};
+                    this->start = start;
+                }
+                if(line_buffer[j] == 'E') {
+                    coord end = {i,j};
+                    this->end = end;
+                }
+                this->map = (char**)malloc(height * sizeof(char*));
 
+            }
+        }
+    }
 }
 
 /**
@@ -69,16 +86,16 @@ int get_width(FILE *file)
     int maze_width = 0;
 	int buffer_size = 100;
     char line_buffer[buffer_size];
-    while (fgets(line_buffer, buffer_size, file) != '\n') {
+    while (fgets(line_buffer, buffer_size, file) != NULL) {
         if (strlen(line_buffer) > maze_width && maze_width == 0) {
             maze_width = strlen(line_buffer);
         }
-        if (strlen(line_buffer) > maze_width && maze_width != 0) {
-            printf("Error: Invalid maze file.\n");
+        if (strlen(line_buffer) != maze_width && maze_width != 0) {
+            printf("%s", "Error: Invalid maze file.\n");
             return 0;
         }
         if (strlen(line_buffer) < MIN_DIM || strlen(line_buffer) > MAX_DIM) {
-            printf("Error: Invalid maze file.\n");
+            printf("%s", "Error: Invalid maze file.\n");
             return 0;
         }
     }
@@ -96,11 +113,10 @@ int get_height(FILE *file)
     int maze_height = 0;
 	int buffer_size = 100;
     char line_buffer[buffer_size];
-    while (fgets(line_buffer, buffer_size, file) != '\n') {
+    while (fgets(line_buffer, buffer_size, file) != NULL) {
         maze_height++;
     }
     if (maze_height < MIN_DIM || maze_height > MAX_DIM) {
-        printf("Error: Invalid maze file.\n");
         return 0;
     }
     return maze_height;
@@ -117,12 +133,27 @@ int read_maze(maze *this, FILE *file, char *filename)
 {
     file = fopen(filename, "r");
     if (file == NULL) {
-        printf("Error: Could not find or open the file.\n");
+        printf("%s", "Error: Could not find or open the file.\n");
         exit(EXIT_FILE_ERROR);
     }
     if (get_height(file) == 0 || get_width(file) == 0) {
+        printf("%s", "Error: Invalid maze file. hw\n");
         exit(EXIT_MAZE_ERROR);
     }
+    int height = get_height(file);
+    int width = get_width(file);
+    int buffer_size = 100;
+    char line_buffer[buffer_size];
+    while (fgets(line_buffer, buffer_size, file) != NULL) {
+        for(int i = 0; i < strlen(line_buffer); i++) {
+            printf(line_buffer[i]);
+            if(line_buffer[i] != 'S' && line_buffer[i] != 'E' && line_buffer[i] != ' ' && line_buffer[i] != '#' && line_buffer[i] != '\n') {
+                printf("%s", "Error: Invalid maze file.\n");
+                exit(EXIT_MAZE_ERROR);
+            }
+        }
+    }
+    return 0;
 }
 
 /**
@@ -189,8 +220,10 @@ int main(int argc, char *argv[])
     FILE *file;
 
     // open and validate mazefile
+    read_maze(this_maze, file, argv[1]);
 
     // read in mazefile to struct
+    create_maze(this_maze, file, this_maze->height, this_maze->width);
 
     // maze game loop
 
