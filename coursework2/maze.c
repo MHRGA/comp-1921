@@ -49,12 +49,13 @@ int create_maze(maze *this, char *filename)
     }
     this->map = (char**)malloc(this->height * sizeof(char*));
     for (int i = 0; i < this->height; i++) {
-        this->map[i] = (char**)malloc(this->width * sizeof(char*));
+        this->map[i] = (char*)malloc(this->width * sizeof(char*));
     }
     int i = 0;
+    char next_char;
     while (!(feof(file))) {
         for (int j = 0; j < this->width; j++) {
-            if(fscanf(file, "%c", &this->map[i][j]) == EOF) {
+            if(fscanf(file, "%1[^\n]%*[\n]", &this->map[i][j]) == '\n') {
                 break;
             }
         }
@@ -66,8 +67,19 @@ int create_maze(maze *this, char *filename)
     for (int i = 0; i < this->height; i++) {
         for (int j = 0; j < this->width; j++) {
             printf("%c", this->map[i][j]);
+            if (this->map[i][j] == 'S') {
+                coord start = {i,j};
+                this->start = start;
+            }
+            else if (this->map[i][j] == 'E') {
+                coord end = {i,j};
+                this->end = end;
+            }
         }
+        printf("\n");
     }
+    printf("Start = (%d,%d)\n", this->start.x, this->start.y);
+    printf("End = (%d,%d)\n", this->end.x, this->end.y);
 }
 
 /**
