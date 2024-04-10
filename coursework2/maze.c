@@ -33,6 +33,44 @@ typedef struct __Maze
 } maze;
 
 /**
+ * @brief Initialise a maze object - allocate memory and set attributes
+ *
+ * @param this pointer to the maze to be initialised
+ * @param height height to allocate
+ * @param width width to allocate
+ * @return int 0 on success, 1 on fail
+ */
+int create_maze(maze *this, char *filename)
+{
+    FILE *file = fopen(filename, "r");
+    if (file == NULL) {
+        printf("%s", "Error: Could not find or open the file.\n");
+        exit(EXIT_FILE_ERROR);
+    }
+    this->map = (char**)malloc(this->height * sizeof(char*));
+    for (int i = 0; i < this->height; i++) {
+        this->map[i] = (char**)malloc(this->width * sizeof(char*));
+    }
+    int i = 0;
+    while (!(feof(file))) {
+        for (int j = 0; j < this->width; j++) {
+            if(fscanf(file, "%c", &this->map[i][j]) == EOF) {
+                break;
+            }
+        }
+        i++;
+        if (i == this->height) {
+            break;
+        }
+    }
+    for (int i = 0; i < this->height; i++) {
+        for (int j = 0; j < this->width; j++) {
+            printf("%c", this->map[i][j]);
+        }
+    }
+}
+
+/**
  * @brief Free the memory allocated to the maze struct
  *
  * @param this the pointer to the struct to free
@@ -51,11 +89,11 @@ int get_width(char *filename)
 {
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
-        printf("%s", "Error: Could not find or open the file.\n");
+        printf("Error: Could not find or open the file.\n");
         exit(EXIT_FILE_ERROR);
     }
     int maze_width = 0;
-    int max_width = -1;
+    int first_width = NULL;
 	int buffer_size = 100;
     char line_buffer[buffer_size];
     while (fgets(line_buffer, buffer_size, file) != NULL) {
@@ -65,12 +103,15 @@ int get_width(char *filename)
                 maze_width++;
             }
         }
-        if (max_width == -1) {
-            max_width = maze_width;
+        if (first_width == NULL) {
+            first_width = maze_width;
         }
-        else if (maze_width != max_width) {
+        else if (maze_width != first_width) {
             return 0;
         }
+    }
+    if (maze_width < MIN_DIM || maze_width > MAX_DIM) {
+        return 0;
     }
     fclose(file);
     return maze_width;
@@ -86,7 +127,7 @@ int get_height(char *filename)
 {
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
-        printf("%s", "Error: Could not find or open the file.\n");
+        printf("Error: Could not find or open the file.\n");
         exit(EXIT_FILE_ERROR);
     }
     int maze_height = 0;
@@ -102,22 +143,39 @@ int get_height(char *filename)
     return maze_height;
 }
 
-int check_characters(char *filename)
+void valid_characters(char *filename)
 {
+    int character;
+    int start_char = 0;
+    int end_char = 0;
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
-        printf("%s", "Error: Could not find or open the file.\n");
+        printf("Error: Could not find or open the file.\n");
         exit(EXIT_FILE_ERROR);
     }
-    int buffer_size = 100;
-    char line_buffer[buffer_size];
-    while (fgets(line_buffer, buffer_size, file) != NULL) {
-        for(int i = 0; line_buffer[i] != '\n'; i++) {
-            if(line_buffer[i] != 'S' && line_buffer[i] != 'E' && line_buffer[i] != ' ' && line_buffer[i] != '#' && line_buffer[i] != '\n') {
-                printf("%s", "Error: Invalid maze file.\n");
+    while ((character = getc(file)) != EOF) {
+        if (character != 'S' && character != 'E' && character != '#' && character != ' ' && character != '\n') {
+            printf("Error: Invalid maze file. cc");
+            exit(EXIT_MAZE_ERROR);
+        }
+        if (character == 'S') {
+            start_char++;
+            if (start_char > 1) {
+                printf("Error: Invalid maze file. se");
                 exit(EXIT_MAZE_ERROR);
             }
         }
+        if (character == 'E') {
+            end_char++;
+            if (end_char > 1) {
+                printf("Error: Invalid maze file. se");
+                exit(EXIT_MAZE_ERROR);
+            }
+        }
+    }
+    if (start_char == 0 || end_char == 0) {
+        printf("Error: Invalid maze file. se");
+        exit(EXIT_MAZE_ERROR);
     }
     fclose(file);
 }
@@ -135,10 +193,13 @@ int read_maze(maze *this, char *filename)
     int width = get_width(filename);
     printf("%d %d \n", height, width);
     if (height == 0 || width == 0) {
-        printf("%s", "Error: Invalid maze file. hw\n");
+        printf("Error: Invalid maze file. hw\n");
         printf("%d %d", height, width);
         exit(EXIT_MAZE_ERROR);
     }
+    valid_characters(filename);
+    this->height = height;
+    this->width = width;
     return 0;
 }
 
@@ -200,6 +261,7 @@ int main(int argc, char *argv[])
         printf("Usage: %s <name1> \n", argv[0]);
         exit(EXIT_ARG_ERROR);
     }
+
     // set up some useful variables (you can rename or remove these if you want)
     coord *player;
     maze *this_maze = malloc(sizeof(maze));
@@ -208,7 +270,7 @@ int main(int argc, char *argv[])
     read_maze(this_maze, argv[1]);
 
     // read in mazefile to struct
-
+    create_maze(this_maze, argv[1]);
 
     // maze game loop
 
