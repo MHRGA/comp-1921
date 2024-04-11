@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 // defines for max and min permitted dimensions
 #define MAX_DIM 100
@@ -40,7 +41,7 @@ typedef struct __Maze
  * @param width width to allocate
  * @return int 0 on success, 1 on fail
  */
-int create_maze(maze *this, char *filename)
+void create_maze(maze *this, char *filename)
 {
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
@@ -52,7 +53,6 @@ int create_maze(maze *this, char *filename)
         this->map[i] = (char*)malloc(this->width * sizeof(char*));
     }
     int i = 0;
-    char next_char;
     while (!(feof(file))) {
         for (int j = 0; j < this->width; j++) {
             if(fscanf(file, "%1[^\n]%*[\n]", &this->map[i][j]) == '\n') {
@@ -66,7 +66,6 @@ int create_maze(maze *this, char *filename)
     }
     for (int i = 0; i < this->height; i++) {
         for (int j = 0; j < this->width; j++) {
-            printf("%c", this->map[i][j]);
             if (this->map[i][j] == 'S') {
                 coord start = {i,j};
                 this->start = start;
@@ -76,7 +75,6 @@ int create_maze(maze *this, char *filename)
                 this->end = end;
             }
         }
-        printf("\n");
     }
     printf("Start = (%d,%d)\n", this->start.x, this->start.y);
     printf("End = (%d,%d)\n", this->end.x, this->end.y);
@@ -242,6 +240,7 @@ void print_maze(maze *this, coord *player)
         // end each row with a newline.
         printf("\n");
     }
+    printf("\n");
 }
 
 /**
@@ -275,7 +274,6 @@ int main(int argc, char *argv[])
     }
 
     // set up some useful variables (you can rename or remove these if you want)
-    coord *player;
     maze *this_maze = malloc(sizeof(maze));
 
     // open and validate mazefile
@@ -285,6 +283,35 @@ int main(int argc, char *argv[])
     create_maze(this_maze, argv[1]);
 
     // maze game loop
+    coord player = {this_maze->start.x,this_maze->start.y};
+    print_maze(this_maze, &player);
+    char choice[2];
+    while(1) {
+        printf("W = Move up, A = Move left, S = Move down, D = Move right, M = Display map\n");
+        printf("What would you like to do? ");
+        scanf("%c", choice);
+        switch(toupper(choice[0])) {
+            case 'W':
+                printf("Moving up one place. \n");
+                break;
+            case 'A':
+                printf("Moving left one place. \n");
+                break;
+            case 'S':
+                printf("Moving down one place. \n");
+                break;
+            case 'D':
+                printf("Moving right one place. \n");
+                break;
+            case 'M':
+                printf("Displaying Map. \n");
+                print_maze(this_maze, &player);
+                break;
+            default:
+                printf("Not a valid choice. Please try again. \n");
+                break;
+        }
+    }
 
     // win
 
