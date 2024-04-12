@@ -37,9 +37,7 @@ typedef struct __Maze
  * @brief Initialise a maze object - allocate memory and set attributes
  *
  * @param this pointer to the maze to be initialised
- * @param height height to allocate
- * @param width width to allocate
- * @return int 0 on success, 1 on fail
+ * @param filename string filename of file to be opened
  */
 void create_maze(maze *this, char *filename)
 {
@@ -50,13 +48,12 @@ void create_maze(maze *this, char *filename)
     }
     this->map = (char**)malloc(this->width * sizeof(char*));
     for (int i = 0; i < this->height; i++) {
-        this->map[i] = (char*)malloc(this->height * sizeof(char));
+        this->map[i] = (char*)malloc(this->height * sizeof(char)); // Create 2D array map
     }
-    int i = 0;
     while (!(feof(file))) {
         for (int i = 0; i < this->height; i++) {
             for (int j = 0; j < this->width; j++) {
-                if(fscanf(file, "%1[^\n]%*[\n]", &this->map[i][j]) == '\n') {
+                if(fscanf(file, "%1[^\n]%*[\n]", &this->map[i][j]) == '\n') { // Allows whitespace but not newline characters
                     break;
                 }
             }
@@ -66,16 +63,14 @@ void create_maze(maze *this, char *filename)
         for (int j = 0; j < this->width; j++) {
             if (this->map[i][j] == 'S') {
                 coord start = {i,j};
-                this->start = start;
+                this->start = start; // Finds and assigns start coordinates
             }
             else if (this->map[i][j] == 'E') {
                 coord end = {i,j};
-                this->end = end;
+                this->end = end; // Finds and assigns end coordinates
             }
         }
     }
-    printf("Start = (%d,%d)\n", this->start.x, this->start.y);
-    printf("End = (%d,%d)\n", this->end.x, this->end.y);
 }
 
 /**
@@ -95,7 +90,7 @@ void free_maze(maze *this)
 /**
  * @brief Validate and return the width of the mazefile
  *
- * @param file the file pointer to check
+ * @param filename string filename of file to be opened
  * @return int 0 for error, or a valid width (5-100)
  */
 int get_width(char *filename)
@@ -106,7 +101,7 @@ int get_width(char *filename)
         exit(EXIT_FILE_ERROR);
     }
     int maze_width = 0;
-    int first_width = NULL;
+    int first_width = 0; // Original width where other widths will be compared against
 	int buffer_size = 100;
     char line_buffer[buffer_size];
     while (fgets(line_buffer, buffer_size, file) != NULL) {
@@ -116,10 +111,10 @@ int get_width(char *filename)
                 maze_width++;
             }
         }
-        if (first_width == NULL) {
+        if (first_width == 0) { // First row
             first_width = maze_width;
         }
-        else if (maze_width != first_width) {
+        else if (maze_width != first_width) { // If not all rows or columns are equal
             return 0;
         }
     }
@@ -147,7 +142,7 @@ int get_height(char *filename)
 	int buffer_size = 100;
     char line_buffer[buffer_size];
     while (fgets(line_buffer, buffer_size, file) != NULL) {
-        maze_height++;
+        maze_height++; // Increments maze height after every row
     }
     if (maze_height < MIN_DIM || maze_height > MAX_DIM) {
         return 0;
@@ -156,6 +151,11 @@ int get_height(char *filename)
     return maze_height;
 }
 
+/**
+ * @brief Validate all characters in file
+ *
+ * @param filename string filename of file to be opened
+ */
 void valid_characters(char *filename)
 {
     int character;
@@ -168,46 +168,44 @@ void valid_characters(char *filename)
     }
     while ((character = getc(file)) != EOF) {
         if (character != 'S' && character != 'E' && character != '#' && character != ' ' && character != '\n') {
-            printf("Error: Invalid maze file. cc");
+            printf("Error: Invalid maze file.");
             exit(EXIT_MAZE_ERROR);
         }
         if (character == 'S') {
             start_char++;
-            if (start_char > 1) {
-                printf("Error: Invalid maze file. se");
+            if (start_char > 1) { // If more than one start character
+                printf("Error: Invalid maze file.");
                 exit(EXIT_MAZE_ERROR);
             }
         }
         if (character == 'E') {
             end_char++;
-            if (end_char > 1) {
-                printf("Error: Invalid maze file. se");
+            if (end_char > 1) { // If more than one end character
+                printf("Error: Invalid maze file.");
                 exit(EXIT_MAZE_ERROR);
             }
         }
     }
-    if (start_char == 0 || end_char == 0) {
-        printf("Error: Invalid maze file. se");
+    if (start_char == 0 || end_char == 0) { // If no start or end characters 
+        printf("Error: Invalid maze file.");
         exit(EXIT_MAZE_ERROR);
     }
     fclose(file);
 }
 
 /**
- * @brief read in a maze file into a struct
+ * @brief read in a maze file and validates it
  *
  * @param this Maze struct to be used
- * @param file Maze file pointer
+ * @param filename string filename of file to be opened
  * @return int 0 on success, 1 on fail
  */
 int read_maze(maze *this, char *filename)
 {
     int height = get_height(filename);
     int width = get_width(filename);
-    printf("%d %d \n", height, width);
     if (height == 0 || width == 0) {
-        printf("Error: Invalid maze file. hw\n");
-        printf("%d %d", height, width);
+        printf("Error: Invalid maze file.\n");
         exit(EXIT_MAZE_ERROR);
     }
     valid_characters(filename);
@@ -256,51 +254,51 @@ void print_maze(maze *this, coord *player)
 void move(maze *this, coord *player, char direction)
 {
     if (direction == 'W') {
-        coord proposed_pos = {player->x - 1, player->y};
-        if (proposed_pos.x == this->height || proposed_pos.x < 0) {
+        coord proposed_pos = {player->x - 1, player->y}; // Creates temporary proposed coordinate
+        if (proposed_pos.x == this->height || proposed_pos.x < 0) { // Checks if new coordinate stays in map dimensions
             printf("Can't move off the edge of map. Please try again.\n");
         }
-        else if (this->map[proposed_pos.x][proposed_pos.y] == '#') {
+        else if (this->map[proposed_pos.x][proposed_pos.y] == '#') { // Checks if new coordinate is a wall
             printf("Hit a wall! Please try again!\n");
         }
         else {
-            player->x = proposed_pos.x;
+            player->x = proposed_pos.x; // Successful move
         }
     }
     else if (direction == 'A') {
-        coord proposed_pos = {player->x, player->y - 1};
-        if (proposed_pos.y == this->width || proposed_pos.y < 0) {
+        coord proposed_pos = {player->x, player->y - 1}; // Creates temporary proposed coordinate
+        if (proposed_pos.y == this->width || proposed_pos.y < 0) { // Checks if new coordinate stays in map dimensions
             printf("Can't move off the edge of map. Please try again.\n");
         }
-        else if (this->map[proposed_pos.x][proposed_pos.y] == '#') {
+        else if (this->map[proposed_pos.x][proposed_pos.y] == '#') { // Checks if new coordinate is a wall
             printf("Hit a wall! Please try again!\n");
         }
         else {
-            player->y = proposed_pos.y;
+            player->y = proposed_pos.y; // Successful move
         }
     }
     else if (direction == 'S') {
-        coord proposed_pos = {player->x + 1, player->y};
-        if (proposed_pos.x == this->height || proposed_pos.x < 0) {
+        coord proposed_pos = {player->x + 1, player->y}; // Creates temporary proposed coordinate
+        if (proposed_pos.x == this->height || proposed_pos.x < 0) { // Checks if new coordinate stays in map dimensions
             printf("Can't move off the edge of map. Please try again.\n");
         }
-        else if (this->map[proposed_pos.x][proposed_pos.y] == '#') {
+        else if (this->map[proposed_pos.x][proposed_pos.y] == '#') { // Checks if new coordinate is a wall
             printf("Hit a wall! Please try again!\n");
         }
         else {
-            player->x = proposed_pos.x;
+            player->x = proposed_pos.x; // Successful move
         }
     }
     else {
-        coord proposed_pos = {player->x, player->y + 1};
-        if (proposed_pos.y == this->width || proposed_pos.y < 0) {
+        coord proposed_pos = {player->x, player->y + 1}; // Creates temporary proposed coordinate
+        if (proposed_pos.y == this->width || proposed_pos.y < 0) { // Checks if new coordinate stays in map dimensions
             printf("Can't move off the edge of map. Please try again.\n");
         }
-        else if (this->map[proposed_pos.x][proposed_pos.y] == '#') {
+        else if (this->map[proposed_pos.x][proposed_pos.y] == '#') { // Checks if new coordinate is a wall
             printf("Hit a wall! Please try again!\n");
         }
         else {
-            player->y = proposed_pos.y;
+            player->y = proposed_pos.y; // Successful move
         }
     }
 }
@@ -330,7 +328,7 @@ int main(int argc, char *argv[])
         exit(EXIT_ARG_ERROR);
     }
 
-    // set up some useful variables (you can rename or remove these if you want)
+    // create maze struct
     maze *this_maze = malloc(sizeof(maze));
 
     // open and validate mazefile
@@ -352,22 +350,18 @@ int main(int argc, char *argv[])
             case 'W':
                 printf("Moving up one place. \n");
                 move(this_maze, &player, 'W');
-                print_maze(this_maze, &player);
                 break;
             case 'A':
                 printf("Moving left one place. \n");
                 move(this_maze, &player, 'A');
-                print_maze(this_maze, &player);
                 break;
             case 'S':
                 printf("Moving down one place. \n");
                 move(this_maze, &player, 'S');
-                print_maze(this_maze, &player);
                 break;
             case 'D':
                 printf("Moving right one place. \n");
                 move(this_maze, &player, 'D');
-                print_maze(this_maze, &player);
                 break;
             case 'M':
                 printf("Displaying Map. \n");
