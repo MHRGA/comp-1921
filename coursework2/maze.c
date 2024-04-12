@@ -48,20 +48,18 @@ void create_maze(maze *this, char *filename)
         printf("%s", "Error: Could not find or open the file.\n");
         exit(EXIT_FILE_ERROR);
     }
-    this->map = (char**)malloc(this->height * sizeof(char*));
+    this->map = (char**)malloc(this->width * sizeof(char*));
     for (int i = 0; i < this->height; i++) {
-        this->map[i] = (char*)malloc(this->width * sizeof(char*));
+        this->map[i] = (char*)malloc(this->height * sizeof(char));
     }
     int i = 0;
     while (!(feof(file))) {
-        for (int j = 0; j < this->width; j++) {
-            if(fscanf(file, "%1[^\n]%*[\n]", &this->map[i][j]) == '\n') {
-                break;
+        for (int i = 0; i < this->height; i++) {
+            for (int j = 0; j < this->width; j++) {
+                if(fscanf(file, "%1[^\n]%*[\n]", &this->map[i][j]) == '\n') {
+                    break;
+                }
             }
-        }
-        i++;
-        if (i == this->height) {
-            break;
         }
     }
     for (int i = 0; i < this->height; i++) {
@@ -87,6 +85,11 @@ void create_maze(maze *this, char *filename)
  */
 void free_maze(maze *this)
 {
+    for (int i = 0; i < this->height; i++)
+    {
+        free(this->map[i]);
+    }
+    free(this->map);
 }
 
 /**
@@ -228,7 +231,7 @@ void print_maze(maze *this, coord *player)
         for (int j = 0; j < this->width; j++)
         {
             // decide whether player is on this spot or not
-            if (player->x == j && player->y == i)
+            if (player->x == i && player->y == j)
             {
                 printf("X");
             }
@@ -252,6 +255,54 @@ void print_maze(maze *this, coord *player)
  */
 void move(maze *this, coord *player, char direction)
 {
+    if (direction == 'W') {
+        coord proposed_pos = {player->x - 1, player->y};
+        if (proposed_pos.x == this->height || proposed_pos.x < 0) {
+            printf("Can't move off the edge of map. Please try again.\n");
+        }
+        else if (this->map[proposed_pos.x][proposed_pos.y] == '#') {
+            printf("Hit a wall! Please try again!\n");
+        }
+        else {
+            player->x = proposed_pos.x;
+        }
+    }
+    else if (direction == 'A') {
+        coord proposed_pos = {player->x, player->y - 1};
+        if (proposed_pos.y == this->width || proposed_pos.y < 0) {
+            printf("Can't move off the edge of map. Please try again.\n");
+        }
+        else if (this->map[proposed_pos.x][proposed_pos.y] == '#') {
+            printf("Hit a wall! Please try again!\n");
+        }
+        else {
+            player->y = proposed_pos.y;
+        }
+    }
+    else if (direction == 'S') {
+        coord proposed_pos = {player->x + 1, player->y};
+        if (proposed_pos.x == this->height || proposed_pos.x < 0) {
+            printf("Can't move off the edge of map. Please try again.\n");
+        }
+        else if (this->map[proposed_pos.x][proposed_pos.y] == '#') {
+            printf("Hit a wall! Please try again!\n");
+        }
+        else {
+            player->x = proposed_pos.x;
+        }
+    }
+    else {
+        coord proposed_pos = {player->x, player->y + 1};
+        if (proposed_pos.y == this->width || proposed_pos.y < 0) {
+            printf("Can't move off the edge of map. Please try again.\n");
+        }
+        else if (this->map[proposed_pos.x][proposed_pos.y] == '#') {
+            printf("Hit a wall! Please try again!\n");
+        }
+        else {
+            player->y = proposed_pos.y;
+        }
+    }
 }
 
 /**
@@ -263,6 +314,12 @@ void move(maze *this, coord *player, char direction)
  */
 int has_won(maze *this, coord *player)
 {
+    if (player->x == this->end.x && player->y == this->end.y) {
+        return 1;
+    }
+    else {
+        return 0;
+    }
 }
 
 int main(int argc, char *argv[])
@@ -285,23 +342,32 @@ int main(int argc, char *argv[])
     // maze game loop
     coord player = {this_maze->start.x,this_maze->start.y};
     print_maze(this_maze, &player);
-    char choice[2];
     while(1) {
+        char choice;
         printf("W = Move up, A = Move left, S = Move down, D = Move right, M = Display map\n");
         printf("What would you like to do? ");
-        scanf("%c", choice);
-        switch(toupper(choice[0])) {
+        choice = getchar();
+        while (getchar() != '\n');
+        switch(toupper(choice)) {
             case 'W':
                 printf("Moving up one place. \n");
+                move(this_maze, &player, 'W');
+                print_maze(this_maze, &player);
                 break;
             case 'A':
                 printf("Moving left one place. \n");
+                move(this_maze, &player, 'A');
+                print_maze(this_maze, &player);
                 break;
             case 'S':
                 printf("Moving down one place. \n");
+                move(this_maze, &player, 'S');
+                print_maze(this_maze, &player);
                 break;
             case 'D':
                 printf("Moving right one place. \n");
+                move(this_maze, &player, 'D');
+                print_maze(this_maze, &player);
                 break;
             case 'M':
                 printf("Displaying Map. \n");
@@ -311,9 +377,15 @@ int main(int argc, char *argv[])
                 printf("Not a valid choice. Please try again. \n");
                 break;
         }
+        if (has_won(this_maze, &player) == 1) {
+            break;
+        }
     }
 
     // win
+    printf("You win!\n");
 
     // return, free, exit
+    free_maze(this_maze);
+    exit(EXIT_SUCCESS);
 }
