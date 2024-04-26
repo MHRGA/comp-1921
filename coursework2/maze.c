@@ -345,7 +345,9 @@ int main(int argc, char *argv[])
         printf("W = Move up, A = Move left, S = Move down, D = Move right, M = Display map\n");
         printf("What would you like to do? ");
         choice = getchar();
-        while (getchar() != '\n');
+        while (choice == '\n') {
+            break;
+        }
         switch(toupper(choice)) {
             case 'W':
                 printf("Moving up one place. \n");
